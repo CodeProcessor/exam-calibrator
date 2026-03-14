@@ -12,6 +12,7 @@ from db import Question, Response, Student, engine
 
 @dataclass
 class IRTResult:
+    """IRT result."""
     student_abilities:    dict[int, float]   # student_id -> theta
     question_difficulties: dict[int, float]  # question_id -> b
     student_ranking:      list[int]          # student_ids sorted low->high ability

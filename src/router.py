@@ -2,11 +2,11 @@ import csv
 import io
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import Response as FileResponse
-from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from core import run_calibration
 from db import Question, Response, Student, engine
+from models import CalibrationResult, QuestionRead, ResponseCreate, ResponseRead, StudentRead
 from structlog import get_logger
 
 router = APIRouter(prefix="/responses", tags=["responses"])
@@ -20,43 +20,6 @@ def get_session():
     with Session(engine) as session:
         yield session
 
-
-class ResponseCreate(BaseModel):
-    """Create a response."""
-    student_name: str
-    question_label: str
-    score_binary: int = Field(ge=0, le=1)
-
-
-class ResponseRead(BaseModel):
-    """Read a response."""
-    student_name: str
-    question_label: str
-    score_binary: int
-
-
-class CalibrationResult(BaseModel):
-    """Calibration result."""
-    student_abilities:     dict[int, float]
-    question_difficulties: dict[int, float]
-    student_ranking:       list[int]
-    question_ranking:      list[int]
-
-
-class QuestionRead(BaseModel):
-    """Read a question."""
-    label: str
-    difficulty: float | None
-
-    model_config = {"from_attributes": True}
-
-
-class StudentRead(BaseModel):
-    """Read a student."""
-    name: str
-    ability: float | None
-
-    model_config = {"from_attributes": True}
 
 @calibrate_router.post("/calibrate", response_model=CalibrationResult)
 def calibrate():
@@ -72,6 +35,13 @@ def calibrate():
         question_ranking=result.question_ranking,
     )
 
+@calibrate_router.post("/reset_scores")
+def reset_scores(session: Session = Depends(get_session)):
+    """Reset the scores of the students and questions."""
+    session.query(Student).update({Student.ability: None})
+    session.query(Question).update({Question.difficulty: None})
+    session.commit()
+    return {"message": "Scores reset successfully"}
 
 @router.post("/attempt", response_model=ResponseRead, status_code=status.HTTP_201_CREATED)
 def create_response(body: ResponseCreate, session: Session = Depends(get_session)):
@@ -116,14 +86,14 @@ def create_response(body: ResponseCreate, session: Session = Depends(get_session
 def get_questions(session: Session = Depends(get_session)):
     """Get all questions."""
     questions = session.query(Question).all()
-    return [QuestionRead(label=question.label, difficulty=question.difficulty) for question in questions]
+    return [QuestionRead.model_validate(question) for question in questions]
 
 
 @router.get("/students", response_model=list[StudentRead])
 def get_students(session: Session = Depends(get_session)):
     """Get all students."""
     students = session.query(Student).all()
-    return [StudentRead(name=student.name, ability=student.ability) for student in students]
+    return [StudentRead.model_validate(student) for student in students]
 
 @router.get("/data")
 def get_data(session: Session = Depends(get_session)):

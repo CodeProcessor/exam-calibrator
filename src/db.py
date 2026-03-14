@@ -1,9 +1,10 @@
 from datetime import datetime
-from sqlalchemy import JSON, CheckConstraint, ForeignKey, UniqueConstraint, create_engine
+from sqlalchemy import CheckConstraint, ForeignKey, UniqueConstraint, create_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-DB_URL = "sqlite:///exam.db"
-engine = create_engine(DB_URL)
+from config import settings
+
+engine = create_engine(settings.db_url)
 
 
 class Base(DeclarativeBase):
