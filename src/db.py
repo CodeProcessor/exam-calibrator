@@ -47,4 +47,5 @@ class Response(Base):
 
 
 def init_db() -> None:
+    """Initialize the database."""
     Base.metadata.create_all(engine)

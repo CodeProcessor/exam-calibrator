@@ -1,0 +1,31 @@
+services:
+  fastapi:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_URL=sqlite:////app/data/exam.db
+      - HOST=0.0.0.0
+      - PORT=8000
+    volumes:
+      - exam-data:/app/data
+    working_dir: /app/src
+    command: ["uv", "run", "uvicorn", "fast_api:app", "--host", "0.0.0.0", "--port", "8000"]
+
+  mcp:
+    build: .
+    ports:
+      - "9000:9000"
+    environment:
+      - DB_URL=sqlite:////app/data/exam.db
+      - API_URL=http://fastapi:8000
+      - MCP_TRANSPORT=http
+      - MCP_HOST=0.0.0.0
+      - MCP_PORT=9000
+    volumes:
+      - exam-data:/app/data
+    working_dir: /app/src
+    command: ["uv", "run", "fastmcp", "run", "mcp_server.py", "--transport", "http", "--host", "0.0.0.0", "--port", "9000"]
+
+volumes:
+  exam-data:

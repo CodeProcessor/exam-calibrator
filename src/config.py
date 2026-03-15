@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     port: int = 8000
     reload: bool = True
 
+    # API base URL (for MCP calling FastAPI, e.g. http://fastapi:8000 in Docker)
+    api_url: str = "http://localhost:8000"
+
     # Secrets (set via env vars, never commit .env)
     secret_key: str | None = None
 

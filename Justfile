@@ -10,5 +10,11 @@ list:
 install:
     uv sync
 
-run:
-    uv run python src/main.py
+fastapi:
+    uv run python src/fast_api.py
+
+mcp:
+    uv run python src/mcp_server.py
+
+compose:
+    docker compose up --build
