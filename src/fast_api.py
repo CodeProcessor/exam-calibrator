@@ -16,7 +16,22 @@ async def lifespan(app: FastAPI):  # pyright: ignore[reportUnusedParameter]
     yield
 
 
-app = FastAPI(title="Exam Calibrator", version="0.1.0", lifespan=lifespan)
+API_DESCRIPTION = """
+**Exam Calibrator** uses a 1-Parameter Logistic (Rasch) Item Response Theory (IRT) model to analyze exam results.
+
+## Workflow
+
+1. **Record responses** — Use `/responses/attempt` to log student answers (0 = wrong, 1 = correct). Students and questions are created automatically.
+2. **Calibrate** — Call `/calibrate` to fit the IRT model and estimate student abilities (θ) and question difficulties (b).
+3. **Inspect results** — Fetch `/responses/students` and `/responses/questions` for ability/difficulty estimates, or download `/responses/data` as CSV.
+"""
+
+app = FastAPI(
+    title="Exam Calibrator",
+    description=API_DESCRIPTION,
+    version="0.1.0",
+    lifespan=lifespan,
+)
 app.include_router(router)
 app.include_router(calibrate_router)
 

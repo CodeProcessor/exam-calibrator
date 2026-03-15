@@ -24,5 +24,8 @@ class Settings(BaseSettings):
     # Secrets (set via env vars, never commit .env)
     secret_key: str | None = None
 
+    # API key for securing endpoints. If unset, no auth required (dev only).
+    api_key: str | None = None
+
 
 settings = Settings()

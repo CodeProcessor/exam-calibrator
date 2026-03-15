@@ -55,18 +55,21 @@ Add to Cursor/Claude MCP config to use with the exam calibrator database.
 ```bash
 curl -X POST http://localhost:8000/responses/attempt \
   -H "Content-Type: application/json" \
+  -H "X-API-Key: your-api-key" \
   -d '{"student_name": "Alice", "question_label": "Q1", "score_binary": 1}'
 ```
 
 **Run calibration:**
 ```bash
-curl -X POST http://localhost:8000/calibrate
+curl -X POST http://localhost:8000/calibrate -H "X-API-Key: your-api-key"
 ```
 
 **Download data as CSV:**
 ```bash
-curl -O -J http://localhost:8000/responses/data
+curl -O -J http://localhost:8000/responses/data -H "X-API-Key: your-api-key"
 ```
+
+*If `API_KEY` is not set, omit the `X-API-Key` header.*
 
 ## Configuration
 
@@ -79,6 +82,7 @@ Settings are loaded from environment variables or a `.env` file:
 | `PORT` | `8000` | Server port |
 | `RELOAD` | `true` | Enable hot reload |
 | `API_URL` | `http://localhost:8000` | FastAPI base URL (for MCP calibrate tool) |
+| `API_KEY` | *(none)* | API key for securing endpoints. If unset, no auth required (dev only). Pass via `X-API-Key` header. |
 
 ## Project Structure
 

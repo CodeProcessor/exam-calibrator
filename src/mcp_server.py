@@ -92,9 +92,12 @@ def get_question(question_label: str | None = None, question_id: int | None = No
 def calibrate() -> dict:
     """Fit the Rasch IRT model on all responses and update student abilities and question difficulties. Calls the FastAPI /calibrate endpoint. Returns the fitted estimates and rankings."""
     url = f"{settings.api_url.rstrip('/')}/calibrate"
+    headers = {}
+    if settings.api_key:
+        headers["X-API-Key"] = settings.api_key
     try:
         with httpx.Client(timeout=60.0) as client:
-            resp = client.post(url)
+            resp = client.post(url, headers=headers)
             resp.raise_for_status()
             return resp.json()
     except httpx.ConnectError as e:

@@ -4,13 +4,21 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import Response as FileResponse
 from sqlalchemy.orm import Session
 
+from auth import verify_api_key
 from core import run_calibration
 from db import Question, Response, Student, engine
 from models import CalibrationResult, QuestionRead, ResponseCreate, ResponseRead, StudentRead
 from structlog import get_logger
 
-router = APIRouter(prefix="/responses", tags=["responses"])
-calibrate_router = APIRouter(tags=["calibration"])
+router = APIRouter(
+    prefix="/responses",
+    tags=["responses"],
+    dependencies=[Depends(verify_api_key)],
+)
+calibrate_router = APIRouter(
+    tags=["calibration"],
+    dependencies=[Depends(verify_api_key)],
+)
 
 logger = get_logger()
 
@@ -21,9 +29,13 @@ def get_session():
         yield session
 
 
-@calibrate_router.post("/calibrate", response_model=CalibrationResult)
+@calibrate_router.post(
+    "/calibrate",
+    response_model=CalibrationResult,
+    summary="Fit IRT model",
+    description="Fits the 1-Parameter Logistic (Rasch) IRT model on all recorded responses. Returns estimated student abilities (θ), question difficulties (b), and their rankings. Requires at least some response data.",
+)
 def calibrate():
-    """Calibrate the exam."""
     try:
         result = run_calibration()
     except ValueError as exc:
@@ -35,17 +47,25 @@ def calibrate():
         question_ranking=result.question_ranking,
     )
 
-@calibrate_router.post("/reset_scores")
+@calibrate_router.post(
+    "/reset_scores",
+    summary="Clear ability/difficulty estimates",
+    description="Clears all student ability and question difficulty estimates from the database. Use before re-calibrating or to start fresh. Does not delete responses.",
+)
 def reset_scores(session: Session = Depends(get_session)):
-    """Reset the scores of the students and questions."""
     session.query(Student).update({Student.ability: None})
     session.query(Question).update({Question.difficulty: None})
     session.commit()
     return {"message": "Scores reset successfully"}
 
-@router.post("/attempt", response_model=ResponseRead, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/attempt",
+    response_model=ResponseRead,
+    status_code=status.HTTP_201_CREATED,
+    summary="Record a response",
+    description="Records a student's answer to a question (0 = incorrect, 1 = correct). Creates the student and question if they don't exist. Updates the score if the student already answered this question.",
+)
 def create_response(body: ResponseCreate, session: Session = Depends(get_session)):
-    """Create a response. Creates student/question if they don't exist."""
     student = session.query(Student).filter(Student.name == body.student_name).first()
     if not student:
         student = Student(name=body.student_name)
@@ -82,22 +102,33 @@ def create_response(body: ResponseCreate, session: Session = Depends(get_session
     )
 
 
-@router.get("/questions", response_model=list[QuestionRead])
+@router.get(
+    "/questions",
+    response_model=list[QuestionRead],
+    summary="List all questions",
+    description="Returns all questions with their labels and difficulty estimates (if calibration has been run).",
+)
 def get_questions(session: Session = Depends(get_session)):
-    """Get all questions."""
     questions = session.query(Question).all()
     return [QuestionRead.model_validate(question) for question in questions]
 
 
-@router.get("/students", response_model=list[StudentRead])
+@router.get(
+    "/students",
+    response_model=list[StudentRead],
+    summary="List all students",
+    description="Returns all students with their names and ability estimates (if calibration has been run).",
+)
 def get_students(session: Session = Depends(get_session)):
-    """Get all students."""
     students = session.query(Student).all()
     return [StudentRead.model_validate(student) for student in students]
 
-@router.get("/data")
+@router.get(
+    "/data",
+    summary="Download response data (CSV)",
+    description="Downloads all response data as a CSV file with columns: student_name, question_label, score. Use for backup or external analysis.",
+)
 def get_data(session: Session = Depends(get_session)):
-    """Get students and questions with their responses as a CSV file download."""
     students = {s.id: s.name for s in session.query(Student).all()}
     questions = {q.id: q.label for q in session.query(Question).all()}
     responses = session.query(Response).all()
@@ -119,9 +150,12 @@ def get_data(session: Session = Depends(get_session)):
     )
 
 
-@router.delete("/reset")
+@router.delete(
+    "/reset",
+    summary="Reset database",
+    description="Deletes all responses, students, and questions. Use with caution — this cannot be undone.",
+)
 def reset(session: Session = Depends(get_session)):
-    """Reset the database."""
     session.query(Response).delete()
     session.query(Student).delete()
     session.query(Question).delete()
