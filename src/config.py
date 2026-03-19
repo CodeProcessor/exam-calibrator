@@ -27,5 +27,12 @@ class Settings(BaseSettings):
     # API key for securing endpoints. If unset, no auth required (dev only).
     api_key: str | None = None
 
+    # Azure Entra ID (for MCP HTTP transport auth). If unset, Entra auth is disabled.
+    azure_tenant_id: str | None = None
+    azure_client_id: str | None = None
+    azure_client_secret: str | None = None
+    azure_scopes: list[str] = ["access"]
+    azure_base_url: str = "http://localhost:9000"
+
 
 settings = Settings()

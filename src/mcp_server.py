@@ -10,9 +10,21 @@ from db import Question, Response, Student, engine, init_db
 # Ensure tables exist (idempotent)
 init_db()
 
+_auth = None
+if settings.azure_tenant_id and settings.azure_client_id and settings.azure_client_secret:
+    from fastmcp.server.auth.providers.azure import AzureProvider
+    _auth = AzureProvider(
+        tenant_id=settings.azure_tenant_id,
+        client_id=settings.azure_client_id,
+        client_secret=settings.azure_client_secret,
+        required_scopes=settings.azure_scopes,
+        base_url=settings.azure_base_url,
+    )
+
 mcp = FastMCP(
     name="Exam Calibrator",
     instructions="Access exam calibrator data: students, questions, responses. Use calibrate to fit the IRT model and update ability/difficulty estimates.",
+    auth=_auth,
 )
 
 
