@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     azure_tenant_id: str | None = None
     azure_client_id: str | None = None
     azure_client_secret: str | None = None
-    azure_scopes: list[str] = ["access"]
+    azure_scopes: str = "read"
     azure_base_url: str = "http://localhost:9000"
 
 

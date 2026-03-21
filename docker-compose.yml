@@ -28,6 +28,7 @@ services:
       - AZURE_CLIENT_ID=${AZURE_CLIENT_ID:-}
       - AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET:-}
       - AZURE_BASE_URL=${AZURE_BASE_URL:-http://localhost:9000}
+      - AZURE_SCOPES=${AZURE_SCOPES:-read}
     volumes:
       - exam-data:/app/data
     working_dir: /app/src
